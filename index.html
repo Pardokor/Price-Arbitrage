@@ -26,22 +26,30 @@ export default function ParadexTracker() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredMarkets = markets.filter(market =>
-    market.symbol?.toLowerCase().includes(search.toLowerCase())
+  const filteredMarkets = markets.filter(m =>
+    m.symbol?.toLowerCase().includes(search.toLowerCase())
   );
 
   const formatPrice = (price) => {
     if (!price) return '$0.00';
-    const num = parseFloat(price);
-    if (num < 0.01) return `$${num.toFixed(6)}`;
-    if (num < 1) return `$${num.toFixed(4)}`;
-    return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const n = parseFloat(price);
+    if (n < 0.01) return `$${n.toFixed(6)}`;
+    if (n < 1) return `$${n.toFixed(4)}`;
+    return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const formatFundingRate = (rate) => {
+  const formatFunding = (rate) => {
     if (!rate) return '0.0000%';
     return `${(parseFloat(rate) * 100).toFixed(4)}%`;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-xl">Chargement...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
@@ -59,47 +67,43 @@ export default function ParadexTracker() {
           />
         </div>
 
-        {loading ? (
-          <div className="text-center py-20 text-gray-500">Chargement...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Paire</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Prix</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Funding Rate</th>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-800">
+                <th className="text-left py-4 px-4 text-gray-400 font-medium">Paire</th>
+                <th className="text-right py-4 px-4 text-gray-400 font-medium">Prix</th>
+                <th className="text-right py-4 px-4 text-gray-400 font-medium">Funding Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMarkets.map((market) => (
+                <tr 
+                  key={market.symbol}
+                  className="border-b border-gray-900 hover:bg-gray-900/50 transition-colors"
+                >
+                  <td className="py-4 px-4">
+                    <span className="text-lg font-semibold">{market.symbol}</span>
+                  </td>
+                  <td className="text-right py-4 px-4">
+                    <span className="text-lg font-bold text-white">
+                      {formatPrice(market.mark_price)}
+                    </span>
+                  </td>
+                  <td className="text-right py-4 px-4">
+                    <span className={`text-lg font-semibold ${
+                      parseFloat(market.funding_rate || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {formatFunding(market.funding_rate)}
+                    </span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredMarkets.map((market) => (
-                  <tr 
-                    key={market.symbol}
-                    className="border-b border-gray-900 hover:bg-gray-900/50 transition-colors"
-                  >
-                    <td className="py-4 px-4">
-                      <span className="text-lg font-semibold">{market.symbol}</span>
-                    </td>
-                    <td className="text-right py-4 px-4">
-                      <span className="text-lg font-bold text-white">
-                        {formatPrice(market.mark_price)}
-                      </span>
-                    </td>
-                    <td className="text-right py-4 px-4">
-                      <span className={`text-lg font-semibold ${
-                        parseFloat(market.funding_rate || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {formatFundingRate(market.funding_rate)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {filteredMarkets.length === 0 && !loading && (
+        {filteredMarkets.length === 0 && (
           <div className="text-center py-20 text-gray-500">Aucun résultat</div>
         )}
       </div>
